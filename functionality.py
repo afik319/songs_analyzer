@@ -317,7 +317,8 @@ async def songs_with_expression_df(expression_str):
 """
 async def word_shows_in_par_df(word):
     params = {'word': word}
-    return await get_query_from_db(word_shows_in_par, None, params=params)
+    res = await get_query_from_db(word_shows_in_par, None, params=params)
+    return list(res.itertuples(index=False, name=None))
 
 """
     Retrieves words based on their position in a song.
