@@ -77,7 +77,7 @@ def split_par(text):
                 curr_mode = irregular_start_mode
         elif curr_mode == letters_mode:
             current_word += char
-            if (not char.isalnum()) and (not char == '\n') and (not char in ["'", '"']):
+            if (not char.isalnum()) and (not char == '\n') and (not char in ["'", '"', "’"]):
                 curr_mode = punctuation_mode
             elif char == '\n':
                 words.append(current_word)

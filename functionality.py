@@ -1,5 +1,6 @@
 from text_processing import get_last_syllable
 from sql_via_code import get_query_from_db, exec_procedure_from_db
+from datetime import datetime
 from queries_bank import *
 import aiofiles
 import asyncio
@@ -140,6 +141,24 @@ async def insert_new_group(group_name, group_purpose = ''):
         return int(group_id.iloc[0, 0])
     return None
 
+async def update_group(old_group_name, new_group_name, new_group_purpose = ''):
+    params = {'group_name': new_group_name}
+    existing_group_df = await get_query_from_db(get_group_id, None, params=params)
+
+    if old_group_name != new_group_name and not existing_group_df.empty:
+        exception_str = f"\n\tInside function 'update_group':\n\t\tA group with the name \"{new_group_name}\" already exists."
+        raise Exception(exception_str)
+    else:
+        new_params = {
+            'old_group_name': old_group_name,
+            'new_group_name': new_group_name,
+            'new_group_purpose': new_group_purpose
+        }
+        try:
+            await get_query_from_db(get_group_details, None, params=new_params)
+        except Exception:
+            raise Exception(f"Inside function 'update_group':\ngroup does not exist.")
+
 """
     Deletes a group and its relationships from the database.
 
@@ -270,6 +289,10 @@ async def group_words_index_df(group_name):
             return group_index_df
     return None
 
+async def export_df_to_csv(df , report_name):
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
+    df.to_csv(f"{report_name}_{timestamp}.csv", index=False)
+
 """
     Retrieves songs that contain a specific expression.
 
@@ -331,6 +354,15 @@ async def words_statistics_in_song_df(song_name = None):
     return await get_query_from_db(words_statistics_in_song, None, params=params)
 
 """
+    Retrieves word statistics in the whole DB.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing word statistics in the whole DB.
+"""
+async def words_statistics_in_db_df():
+    return await get_query_from_db(words_statistics_in_db, None)
+
+"""
     Retrieves paragraph statistics for a specific song.
 
     Args:
@@ -390,4 +422,35 @@ async def get_rhymes_for_word_df(word_str, song_name = None):
 async def clear_db():
     await exec_procedure_from_db('DeleteAllData', None)
 
-asyncio.run(clear_db())
+# A utility function to fetch data from the database and return it as a list of tuples.
+# If the result is empty, it returns an empty list.
+async def fetch_table_df(query):
+    query_df = await get_query_from_db(query, None)
+    if query_df.empty:
+        return []
+    return list(query_df.itertuples(index=False, name=None))
+
+# Fetches a list of songs with their IDs and names from the 'songs' table.
+async def fetch_songs():
+    return await fetch_table_df("SELECT id, song_name FROM songs")
+
+# Fetches distinct words associated with songs, including their IDs, word IDs, clean words, and song IDs.
+async def fetch_words_in_songs():
+    return await fetch_table_df("SELECT distinct id, word_id, clean_word, song_id FROM words_in_songs")
+
+# Fetches distinct groups with their IDs, names, and purposes from the 'groups' table.
+async def fetch_groups():
+    return await fetch_table_df("SELECT distinct id, group_name, group_purpose FROM groups")
+
+# Fetches words in groups by joining 'words_in_group' and 'words' tables,
+# if group_name is given, it will return only the words in this group.
+async def fetch_words_in_groups(group_name = None):
+    params = {'group_name': group_name}
+    query_df = await get_query_from_db(get_words_in_group, None, params=params)
+    if query_df.empty:
+        return []
+    return list(query_df.itertuples(index=False, name=None))
+
+# Fetches distinct words with their IDs and string representations from the 'words' table.
+async def fetch_words():
+    return await fetch_table_df("SELECT distinct id, word_str FROM words")

@@ -111,6 +111,26 @@ delete from words_in_group
 where word_id = :word_id AND group_id = :group_id
 """
 
+get_words_in_group = """
+SELECT 
+    wig.id AS wig_id, 
+    wig.word_id, 
+    wig.group_id, 
+    w.word_str 
+FROM words_in_group wig 
+JOIN groups ON groups.id = wig.group_id
+LEFT JOIN words w ON wig.word_id = w.id
+WHERE (:group_name IS NULL OR groups.group_name = :group_name)
+"""
+
+get_group_details = """
+UPDATE groups
+SET 
+    group_name = :new_group_name,
+    group_purpose = :new_group_purpose
+WHERE group_name = :old_group_name
+"""
+
 songs_with_expression = """
 WITH SONGS_WITH_EXPRESSION AS(
     SELECT 
@@ -155,7 +175,7 @@ select distinct
     par_num, 
     STRING_AGG(unclean_word, '') WITHIN GROUP (ORDER BY word_num) AS par_content
 from word_pars
-WHERE (:word IS NULL OR clean_word LIKE '%' + :word + '%')
+WHERE (:word IS NULL OR clean_word = :word)
 AND clean_word <> ''
 group by clean_word, song_name, par_num
 order by clean_word, song_name, par_num
@@ -166,7 +186,7 @@ select distinct words.word_str, song_name, par_num, line_num_in_par, word_num_in
 FROM words
 join words_in_songs on words.id = words_in_songs.word_id
 join songs on songs.id = words_in_songs.song_id
-order by song_name, par_num, line_num_in_par, word_num_in_line
+order by word_str, song_name, par_num, line_num_in_par, word_num_in_line
 """
 
 get_group_words = """
@@ -197,6 +217,18 @@ join songs on songs.id = wis.song_id
 WHERE (:song_name IS NULL OR song_name = :song_name)
 group by song_name, clean_word
 order by song_name, TOTAL_SHOWS DESC
+"""
+
+words_statistics_in_db = """
+select 
+    clean_word WORD, 
+    COUNT(wis.id) TOTAL_WORD_SHOWS,
+    SUM(COUNT(wis.id)) OVER () TOTAL_WORDS_ALL_SONGS,
+    ROUND(CAST(COUNT(wis.id) AS float) / (SUM(COUNT(wis.id)) OVER ()) , 3) AS FREQUENCY
+from words_in_songs wis
+join songs on songs.id = wis.song_id
+group by clean_word
+order by TOTAL_WORD_SHOWS DESC
 """
 
 pars_statistics_in_song = """

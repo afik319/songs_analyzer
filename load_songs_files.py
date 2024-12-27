@@ -182,24 +182,11 @@ async def insert_new_song(song_name, curr_song_path):
             par_start_word_index = end_par_index + 1
         await asyncio.gather(*tasks)
 
-"""
-    Loads songs from text files and inserts them into the database.
-
-    Args:
-        None
-
-    Returns:
-        bool: True if the operation was successful.
-"""
-#do not call it at the same time
-async def load_songs_from_files():
-    directory_path = "./static/songs"
+async def load_songs_from_files_list(files_path_list):
     async def load_songs():
         tasks = []
-        for file_name in os.listdir(directory_path):
-            if file_name.endswith(".txt"):
-                curr_song_path = f"{directory_path}/{file_name}"
-                song_name = os.path.splitext(file_name)[0]
+        for curr_song_path in files_path_list:
+                song_name = os.path.splitext(os.path.basename(curr_song_path))[0]
 
                 is_exist_song_query = "SELECT COUNT(1) FROM songs WHERE song_name = :song_name"
                 is_exist_song_result = await get_query_from_db(is_exist_song_query, None, params={'song_name': song_name})
@@ -213,6 +200,24 @@ async def load_songs_from_files():
         await update_word_id()
     await load_songs()
     return True
+
+"""
+    Loads songs from text files and inserts them into the database.
+
+    Args:
+        None
+
+    Returns:
+        bool: True if the operation was successful.
+"""
+async def load_songs_from_files():
+    path_list = []
+    directory_path = "./static/songs"
+    for file_name in os.listdir(directory_path):
+        if file_name.endswith(".txt"):
+            curr_song_path = f"{directory_path}/{file_name}"
+            path_list.append(curr_song_path)
+    return await load_songs_from_files_list(path_list)
 
 """
     Main function to load songs from files and close the database connection.
@@ -236,4 +241,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
