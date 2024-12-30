@@ -350,9 +350,8 @@ async def words_by_place_df(song_name = None, par_num = None, line_num_in_par = 
     Returns:
         pd.DataFrame: A DataFrame containing word statistics for the song.
 """
-async def words_statistics_in_song_df(song_name = None):
-    params = {'song_name': song_name}
-    return await get_query_from_db(words_statistics_in_song, None, params=params)
+async def words_statistics_in_song_df():
+    return await get_query_from_db(words_statistics_in_song, None)
 
 """
     Retrieves word statistics in the whole DB.
@@ -372,9 +371,8 @@ async def words_statistics_in_db_df():
     Returns:
         pd.DataFrame: A DataFrame containing paragraph statistics for the song.
 """
-async def pars_statistics_in_song_df(song_name = None):
-    params = {'song_name': song_name}
-    return await get_query_from_db(pars_statistics_in_song, None, params=params)
+async def pars_statistics_in_song_df():
+    return await get_query_from_db(pars_statistics_in_song, None)
 
 """
     Retrieves line statistics for a specific song.
@@ -385,9 +383,8 @@ async def pars_statistics_in_song_df(song_name = None):
     Returns:
         pd.DataFrame: A DataFrame containing line statistics for the song.
 """
-async def lines_statistics_in_song_df(song_name = None):
-    params = {'song_name': song_name}
-    return await get_query_from_db(lines_statistics_in_song, None, params=params)
+async def lines_statistics_in_song_df():
+    return await get_query_from_db(lines_statistics_in_song, None)
 
 """
     Retrieves overall statistics for songs.
@@ -398,9 +395,8 @@ async def lines_statistics_in_song_df(song_name = None):
     Returns:
         pd.DataFrame: A DataFrame containing overall statistics for songs.
 """
-async def songs_statistics_df(song_name = None):
-    params = {'song_name': song_name}
-    return await get_query_from_db(songs_statistics, None, params=params)
+async def songs_statistics_df():
+    return await get_query_from_db(songs_statistics, None)
 
 """
     Retrieves words that rhyme with a specific word in a song.
@@ -412,12 +408,9 @@ async def songs_statistics_df(song_name = None):
     Returns:
         pd.DataFrame: A DataFrame containing words that rhyme with the specified word.
 """
-async def get_rhymes_for_word_df(word_str, song_name = None):
+async def get_rhymes_for_word_df(word_str):
     last_syllable = get_last_syllable(word_str)
-    params = {
-        'last_syllable': last_syllable,
-        'song_name': song_name
-        }
+    params = {'last_syllable': last_syllable}
     return await get_query_from_db(rhymes_for_word, None, params=params)
 
 async def clear_db():
@@ -455,3 +448,4 @@ async def fetch_words_in_groups(group_name = None):
 # Fetches distinct words with their IDs and string representations from the 'words' table.
 async def fetch_words():
     return await fetch_table_df("SELECT distinct id, word_str FROM words")
+

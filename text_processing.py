@@ -1,8 +1,9 @@
 import pronouncing
 from nltk.corpus import cmudict
+from num2words import num2words
 
-numbers_last_syllable = {"0": "N", "1": "N", "2": "UW1", "3": "IY1", "4": "R", "5": "V", "6": "S", "7": "N", "8": "T", "9": "N"}
 LAST_SYLLABLE_INDEX = -1
+LAST_WORD_INDEX = -1
 FINAL_LETTERS = 3
 
 """
@@ -15,12 +16,12 @@ FINAL_LETTERS = 3
         str or None: The last syllable if found, otherwise None.
 """
 def get_last_syllable(word):
+    if word.isdigit():
+        word = num2words(abs(int(word))).split()[LAST_WORD_INDEX]
+
     syllables = pronouncing.phones_for_word(word)
     if syllables:
         return syllables[0].split()[LAST_SYLLABLE_INDEX]
-
-    if word.isdigit():
-        return numbers_last_syllable[word[LAST_SYLLABLE_INDEX]]
 
     nltk_result = get_last_syllable_nltk(word)
     if nltk_result:

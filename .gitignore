@@ -1,6 +1,9 @@
 .idea
 .venv
+.env
 __pycache__
 static/songs/*
-.env
+basic_db/
 sql_via_code.log
+
+

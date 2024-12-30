@@ -182,6 +182,12 @@ async def insert_new_song(song_name, curr_song_path):
             par_start_word_index = end_par_index + 1
         await asyncio.gather(*tasks)
 
+
+async def remove_song(song_name):
+    song_id = int(await get_song_id(song_name))
+    params = {'song_id': song_id}
+    await exec_procedure_from_db('RemoveSong', None, params=params)
+
 async def load_songs_from_files_list(files_path_list):
     async def load_songs():
         tasks = []

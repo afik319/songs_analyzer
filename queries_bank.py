@@ -182,11 +182,11 @@ order by clean_word, song_name, par_num
 """
 
 words_index = """
-select distinct words.word_str, song_name, par_num, line_num_in_par, word_num_in_line
-FROM words
-join words_in_songs on words.id = words_in_songs.word_id
+select distinct word_id, clean_word, song_name, par_num, line_num_in_par, word_num_in_line
+from words_in_songs
 join songs on songs.id = words_in_songs.song_id
-order by word_str, song_name, par_num, line_num_in_par, word_num_in_line
+WHERE clean_word <> ''
+order by clean_word, song_name, par_num, line_num_in_par, word_num_in_line
 """
 
 get_group_words = """
@@ -214,21 +214,27 @@ select song_name, clean_word WORD, COUNT(DISTINCT wis.id) TOTAL_SHOWS,
     ROUND((CAST(COUNT(DISTINCT wis.id) AS FLOAT) / SUM(COUNT(wis.id)) OVER (PARTITION BY song_name)) , 2) AS Frequency
 from words_in_songs wis
 join songs on songs.id = wis.song_id
-WHERE (:song_name IS NULL OR song_name = :song_name)
 group by song_name, clean_word
 order by song_name, TOTAL_SHOWS DESC
 """
 
 words_statistics_in_db = """
-select 
-    clean_word WORD, 
-    COUNT(wis.id) TOTAL_WORD_SHOWS,
-    SUM(COUNT(wis.id)) OVER () TOTAL_WORDS_ALL_SONGS,
-    ROUND(CAST(COUNT(wis.id) AS float) / (SUM(COUNT(wis.id)) OVER ()) , 3) AS FREQUENCY
-from words_in_songs wis
-join songs on songs.id = wis.song_id
-group by clean_word
-order by TOTAL_WORD_SHOWS DESC
+DECLARE @TOTAL_WORDS_ALL_SONGS BIGINT;
+
+SELECT 
+    @TOTAL_WORDS_ALL_SONGS = SUM(COUNT(words_in_songs.id))  OVER ()
+FROM words_in_songs JOIN songs ON songs.id = words_in_songs.song_id
+GROUP BY clean_word;
+
+SELECT 
+    clean_word AS WORD,
+    COUNT(wis.id) AS TOTAL_WORD_SHOWS,
+    @TOTAL_WORDS_ALL_SONGS AS TOTAL_WORDS_ALL_SONGS,
+    ROUND(CAST(COUNT(wis.id) AS FLOAT) / @TOTAL_WORDS_ALL_SONGS, 3) AS FREQUENCY
+FROM words_in_songs wis
+JOIN songs ON songs.id = wis.song_id
+GROUP BY clean_word
+ORDER BY TOTAL_WORD_SHOWS DESC;
 """
 
 pars_statistics_in_song = """
@@ -236,7 +242,7 @@ select
     song_name, 
     wis.par_num, 
     MAX(line_num_in_par) AS TOTAL_PAR_LINES,
-    COUNT(DISTINCT wis.id) TOTAL_PAR_WORDS,
+    COUNT(wis.id) TOTAL_PAR_WORDS,
     SUM(chars_count) AS TOTAL_PAR_CHARS,
     ROUND(CAST(SUM(chars_count) AS float) / COUNT(word_id) , 2)  AS PAR_AVERAGE_CHARS_PER_WORD,
     MAX(wis.par_num) OVER (PARTITION BY song_name) AS TOTAL_PARS_IN_SONG,
@@ -246,7 +252,6 @@ select
     ROUND((CAST(COUNT(DISTINCT wis.id) AS FLOAT) / SUM(COUNT(wis.id)) OVER (PARTITION BY song_name)) / (1.0 / (MAX(wis.par_num) OVER (PARTITION BY song_name))) , 2) AS RELATIVE_DENSITY
 from words_in_songs wis
 join songs on songs.id = wis.song_id
-WHERE (:song_name IS NULL OR song_name = :song_name)
 group by song_name, par_num
 order by song_name, par_num
 """
@@ -254,8 +259,8 @@ order by song_name, par_num
 lines_statistics_in_song = """
 select 
     song_name, 
-    par_num, 
     line_num_in_par,
+    par_num, 
     SUM(chars_count) AS TOTAL_LINE_CHARS,
     COUNT(DISTINCT wis.id) TOTAL_WORDS,
     SUM(COUNT(wis.id)) OVER (PARTITION BY song_name) AS TOTAL_WORDS_IN_SONG,
@@ -264,7 +269,6 @@ select
     ROUND((CAST(COUNT(DISTINCT wis.id) AS FLOAT) / SUM(COUNT(wis.id)) OVER (PARTITION BY song_name)) / (1.0 / (COUNT(line_num_in_par) OVER (PARTITION BY song_name))) , 2) AS RELATIVE_DENSITY
 from words_in_songs wis
 join songs on songs.id = song_id
-WHERE (:song_name IS NULL OR song_name = :song_name)
 group by song_name, par_num, line_num_in_par
 order by song_name, par_num, line_num_in_par
 """
@@ -278,17 +282,19 @@ select
     SUM(chars_count) AS TOTAL_CHARS
 from words_in_songs wis
 join songs on songs.id = song_id
-WHERE (:song_name IS NULL OR song_name = :song_name)
 group by song_name
 order by song_name
 """
 
 rhymes_for_word = """
-SELECT DISTINCT clean_word
+SELECT DISTINCT 
+    clean_word, song_name, par_num, line_num_in_par, last_syllable
 FROM words_in_songs wis
 JOIN words ON words.id = wis.word_id
 JOIN songs ON songs.id = wis.song_id
 WHERE 
     last_syllable = :last_syllable AND
-    (:song_name IS NULL OR song_name = :song_name)
+    is_last_in_line = 1
+ORDER BY song_name, par_num, line_num_in_par
 """
+
