@@ -67,7 +67,7 @@ order by song_name, par_num, line_num_in_par
 """
 
 search_details = """
-select songs.song_name, song_details.[Poet’s_Name], song_details.[Composer’s_Name], song_details.Creation_Year, song_details.[Performer’s_Name]
+select song_details.Id, songs.song_name, song_details.[Poet’s_Name], song_details.[Composer’s_Name], song_details.Creation_Year, song_details.[Performer’s_Name]
 from song_details
 join songs on song_details.song_id = songs.id
 WHERE 
@@ -154,6 +154,11 @@ FROM words_in_songs wis
 JOIN songs ON wis.song_id = songs.id
 GROUP BY songs.song_name
 ORDER BY songs.song_name
+"""
+
+remove_details_line = """
+delete from song_details
+where id = :details_line_id
 """
 
 word_shows_in_par = """
@@ -297,4 +302,23 @@ WHERE
     is_last_in_line = 1
 ORDER BY song_name, par_num, line_num_in_par
 """
+
+last_in_line_words =  """
+    select distinct clean_word
+    from words_in_songs
+    where is_last_in_line = 1
+    order by clean_word
+"""
+
+insert_expression =  """
+    IF NOT EXISTS (
+        SELECT expression_str
+        FROM expression
+        WHERE expression_str = :expression_str
+    )
+    insert into expression
+    select :expression_str
+"""
+
+
 

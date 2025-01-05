@@ -25,14 +25,14 @@ engine_manager = EngineManager()
     Returns:
         None
 """
-async def insert_to_words_in_songs(unclean_word, word_str , song_id, paragraphs_num,  line_num_in_par , word_num_in_line , word_index_in_song):
+async def insert_to_words_in_songs(unclean_word, clean_word , song_id, paragraphs_num,  line_num_in_par, word_num_in_line, word_index_in_song):
     insert_words_in_songs_query = """ 
         INSERT INTO words_in_songs 
             (unclean_word,  clean_word,  song_id,  par_num,  line_num_in_par,  word_num_in_line,  is_last_in_line,  word_num,  chars_count,  last_syllable) VALUES  
             (:unclean_word, :clean_word, :song_id, :par_num, :line_num_in_par, :word_num_in_line, :is_last_in_line, :word_num, :chars_count, :last_syllable)
         """
     params = {
-        'clean_word': word_str,
+        'clean_word': clean_word,
         'unclean_word': unclean_word,
         'song_id': song_id,
         'par_num': paragraphs_num,
@@ -40,8 +40,8 @@ async def insert_to_words_in_songs(unclean_word, word_str , song_id, paragraphs_
         'word_num_in_line': word_num_in_line,
         'is_last_in_line': 1 if unclean_word.endswith("\n") else 0,
         'word_num': word_index_in_song,
-        'chars_count': len(word_str),
-        'last_syllable': get_last_syllable(word_str)
+        'chars_count': len(clean_word),
+        'last_syllable': get_last_syllable(clean_word)
         }
     await get_query_from_db(insert_words_in_songs_query, None, params=params)
 
@@ -98,11 +98,14 @@ async def insert_par_words(song_id, paragraphs_num, par_words_list , start_par_i
     tasks = []
     curr_line = 1
     curr_word_num_in_line = 1
+    clean_word_first_char_index = 1
     word_index_in_song = start_par_index
     for word in par_words_list:
         clean_word = (re.sub(r'^[\W_]+|[\W_]+$', '', word)).lower()
+        clean_word_last_char_index = clean_word_first_char_index + len(clean_word) - 1
         tasks.append(insert_to_words_in_songs(word, clean_word, song_id, paragraphs_num, curr_line, curr_word_num_in_line, word_index_in_song))
 
+        clean_word_first_char_index = clean_word_last_char_index + 1
         word_index_in_song += 1
         curr_word_num_in_line += 1
         if word.endswith("\n"):

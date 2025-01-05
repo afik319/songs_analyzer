@@ -1,3 +1,5 @@
+import pandas as pd
+
 from text_processing import get_last_syllable
 from sql_via_code import get_query_from_db, exec_procedure_from_db
 from datetime import datetime
@@ -62,6 +64,10 @@ async def insert_song_details(song_name, poet = "", composer = "", creation_year
         }
     await get_query_from_db(insert_song_details_query, None, params=params)
 
+async def remove_song_details_line(details_line_id):
+    params = {'details_line_id': details_line_id}
+    await get_query_from_db(remove_details_line, None, params=params)
+
 """
     Retrieves song details based on search parameters.
 
@@ -75,12 +81,13 @@ async def insert_song_details(song_name, poet = "", composer = "", creation_year
     Returns:
         pd.DataFrame: A DataFrame containing the search results.
 """
-async def get_search_details_df(song_name = None, poet = None, composer = None, creation_year = None, performer_name = None):
+async def get_search_details_df(song_name = None, poet = None, composer = None, creation_year = None, performance_video_link = None, performer_name = None):
     params = {
         'song_name': song_name,
         'poet': poet,
         'composer': composer,
         'creation_year': creation_year,
+        'Performance_Video_Link': performance_video_link,
         'performer_name': performer_name
         }
     song_id_query_df = await get_query_from_db(search_details, None, params=params)
@@ -413,6 +420,9 @@ async def get_rhymes_for_word_df(word_str):
     params = {'last_syllable': last_syllable}
     return await get_query_from_db(rhymes_for_word, None, params=params)
 
+async def get_last_in_line_words_df():
+    return await get_query_from_db(last_in_line_words, None)
+
 async def clear_db():
     await exec_procedure_from_db('DeleteAllData', None)
 
@@ -449,3 +459,13 @@ async def fetch_words_in_groups(group_name = None):
 async def fetch_words():
     return await fetch_table_df("SELECT distinct id, word_str FROM words")
 
+async def insert_new_expression(expression):
+    params = {'expression_str': expression}
+    await get_query_from_db(insert_expression, None, params=params)
+
+async def delete_expression(expression_str):
+    delete_query = "DELETE FROM expression WHERE expression_str = :expression_str"
+    params = {'expression_str': expression_str}
+    await get_query_from_db(delete_query, None, params=params)
+
+asyncio.run(delete_expression('aaab'))
