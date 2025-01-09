@@ -231,6 +231,13 @@ songs_table_query = "SELECT * FROM songs order by song_name"
 
 groups_table_query = "SELECT * FROM groups"
 
-words_table_query = "SELECT * FROM words"
+words_table_query = "SELECT id, word_str FROM words"
 
 words_in_songs_main_columns_table_query = "SELECT id, word_id, clean_word, song_id FROM words_in_songs"
+
+whole_words_table_query = "SELECT * FROM words"
+
+insert_to_words_query = """
+    INSERT INTO words (word_str, last_syllable)
+    VALUES (:word_str, :last_syllable)
+"""
