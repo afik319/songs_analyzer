@@ -120,8 +120,8 @@ Below are the recommended steps for setting up TuneDB in a Windows environment.
 
 3. **Run the New SQL Server Container**  
    - Double-click `new_sql_server.bat`.  
-     - This spins up a Docker container (named `sqlserver_container`) from the image `afik319/mssql-songs-db` and exposes **port 1433** by default.  
-     - If you want to use a different port, change the `1433` value in the `.bat` file, **and** update the corresponding `HOST` value in the `.env` file (for example, `localhost:NEW_PORT`).  
+     - This spins up a Docker container (named `sqlserver_container` or any name configured in your `.bat` file) from the image `afik319/mssql-songs-db` and exposes **port 1433** by default.  
+     - If you want to use a different port, change `1433` in the `.bat` file, **and** update the corresponding `HOST` value in your `.env` file (e.g., `HOST=localhost:NEW_PORT`).
 
 4. **Configure the `.env` File**  
    - By default, it looks like this:
@@ -133,19 +133,52 @@ Below are the recommended steps for setting up TuneDB in a Windows environment.
      PASSWORD=YourStrongPass123
      DRIVER=ODBC Driver 17 for SQL Server
      ```
-   - Modify these settings if needed (e.g., different port, different DB name or credentials, etc.).  
+   - Modify these settings if needed (e.g., different port, different DB name or credentials, etc.).
 
 5. **Launch the Application**  
    - Double-click `songs.bat` (assuming you have such a file).  
-     - This should activate the virtual environment and start the Quart application (`app.py`) or equivalent script.  
+     - This should activate the virtual environment and start the Quart application (`app.py`) or an equivalent script.  
      - Once running, open your browser at `http://127.0.0.1:5000` (or whichever host/port your app is set to).
 
-6. **Verify Installation**  
-   - Access the main page in your browser.  
-   - You can now upload songs (`.txt` files) and verify your DB settings.
+6. **(Optional) Backup & Restore Using BAK Files and Static Songs Data**  
+The system uses a persistent Docker volume to maintain database state, so typically your data remains intact even if the container is restarted. However, for sharing or creating backups, you can follow these steps:
+
+#### Important Notes:
+- The `static/songs` folder is crucial for the proper functioning of the system. Avoid manually modifying or deleting this folder.
+- Always ensure the application is **not running** before initiating a restore process.
+
+#### Steps to Work with Backup and Restore:
+
+##### Creating a Backup:
+1. Navigate to the `create or restore backup` folder.
+2. Double-click the `do_and_get_bak.bat` file.
+   - This script:
+     - Creates a backup of the database (`DB.bak`) inside the Docker container.
+     - Copies the backup file to the `create or restore backup` folder.
+     - Compresses the `static/songs` folder into a `songs_backup.zip` file and places it in the same folder.
+3. After the script finishes, the `DB.bak` and `songs_backup.zip` files will be available in the `create or restore backup` folder. You can share these files or save them for future restoration.
+
+##### Restoring from a Backup:
+1. Copy the `DB.bak` and `songs_backup.zip` files to the `create or restore backup` folder on the target machine.
+2. Double-click the `restore_from_bk.bat` file.
+   - This script:
+     - Restores the `DB.bak` file into the database.
+     - Extracts the contents of `songs_backup.zip` and replaces the `static/songs` folder with the extracted data.
+3. Ensure that the application is **not running** while performing this restore process to avoid conflicts.
+
+#### Key Highlights:
+- **Backup Files**: Always back up both `DB.bak` and `songs_backup.zip` together to ensure a complete project state and avoid bugs.
+- **Shared Projects**: To share a project, distribute the `DB.bak` and `songs_backup.zip` files.
+- **Restoration Caution**: Restoration overwrites the `static/songs` folder, so ensure you don’t lose any important changes not present in the backup files.
+
+With this backup and restore process, you can efficiently manage and share project data while preserving the system's integrity.
+
+7. **Verify Installation**  
+   - Access the main page in your browser to ensure the app is running correctly.
+   - You can now upload `.txt` files (songs), check your database, and optionally perform backups or restores using the above scripts.
 
 ### Additional Notes
-- `requirements.txt` contains all Python dependencies. If you need to manually install them (e.g., for non-Windows environments), run:
+- `requirements.txt` contains all Python dependencies. If you need to install them manually (e.g., on a different OS), run:
 
 ---
 
