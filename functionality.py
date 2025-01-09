@@ -1,5 +1,3 @@
-import asyncio
-
 from text_processing import get_last_syllable
 from sql_via_code import get_query_from_db, exec_procedure_from_db
 from queries_bank import *

@@ -227,7 +227,7 @@ is_exist_song_query = "SELECT COUNT(1) FROM songs WHERE song_name = :song_name"
 
 expression_table_query = "SELECT * FROM expression"
 
-songs_table_query = "SELECT * FROM songs"
+songs_table_query = "SELECT * FROM songs order by song_name"
 
 groups_table_query = "SELECT * FROM groups"
 

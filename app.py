@@ -339,7 +339,6 @@ async def upload_files():
             file_path = os.path.join(UPLOAD_FOLDER, file.filename)
             await file.save(file_path)
             file_list.append(file_path)
-            print(f"Saved: {file.filename}")
 
         start_time = time.time()
         await call_in_background(load_songs_from_files_list, file_list)
