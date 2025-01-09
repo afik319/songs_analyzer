@@ -13,3 +13,4 @@ basic_db/
 package.json
 *.zip
 *.bak
+static/songs/*
