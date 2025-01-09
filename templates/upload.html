@@ -63,6 +63,7 @@
   animation: spin 1s linear infinite;
 }
 
+
 @keyframes spin {
   0% {
     transform: rotate(0deg);
@@ -83,13 +84,23 @@
     <h2 class="text-white text-[22px] font-bold leading-tight tracking-[-0.015em] mb-4">Songs</h2>
     
     <!-- כפתור Browse New Songs -->
-    <button
-      id="browse-new-songs"
-      class="bg-[#2094f3] text-white rounded-lg px-4 py-2 mb-4 text-sm font-bold leading-normal hover:bg-[#1a7ec8] transition-colors duration-200"
-      onclick="document.getElementById('fileInput').click();"
-    >
-      Browse New Songs
-    </button>
+    <div class="flex items-center gap-4">
+      <button
+        id="browse-new-songs"
+        class="bg-[#2094f3] text-white rounded-lg px-4 py-2 text-sm font-bold leading-normal hover:bg-[#1a7ec8] transition-colors duration-200"
+        onclick="document.getElementById('fileInput').click();"
+      >
+        Browse New Songs
+      </button>
+      <button
+        id="reset"
+        class="bg-[#2094f3] text-white rounded-lg px-4 py-2 text-sm font-bold leading-normal hover:bg-[#1a7ec8] transition-colors duration-200"
+        onclick=""
+      >
+        Reset
+      </button>
+    </div>
+    
     <input 
           type="file" 
           id="fileInput" 
@@ -106,7 +117,8 @@
               data-song-id="{{ id }}"
               data-song-name="{{ song_name }}"
               class="group-item flex items-center gap-4 p-4 rounded-lg cursor-pointer bg-[#101a23] hover:bg-[#2a3e50] transition relative"
-              onclick="handleSongSelection('{{ song_name }}')"
+              onclick="handleSongSelection(decodeURIComponent(this.getAttribute('data-song-name')))"
+
             >
               <div class="text-white flex items-center justify-center rounded-lg bg-[#223749] size-12">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
@@ -186,27 +198,28 @@
       </div>
     </div>
 
-    <div class="flex flex-col gap-4 h-screen">
-      <!-- חלק עליון: טבלה -->
-      <div class="flex-1 overflow-y-auto">
-        <table class="w-full border-collapse">
-          <thead>
-            <tr class="bg-[#182834]">
-              <th class="px-4 py-4 text-left text-white w-[50px] text-sm font-medium leading-normal sticky top-0 bg-[#182834] z-10">Select</th>
-              <th class="px-4 py-4 text-left text-white w-[400px] text-sm font-medium leading-normal sticky top-0 bg-[#182834] z-10">Song Name</th>
-              <th class="px-4 py-4 text-left text-white w-[400px] text-sm font-medium leading-normal sticky top-0 bg-[#182834] z-10">Poet's Name</th>
-              <th class="px-4 py-4 text-left text-white w-[400px] text-sm font-medium leading-normal sticky top-0 bg-[#182834] z-10">Composer's Name</th>
-              <th class="px-4 py-4 text-left text-white w-[400px] text-sm font-medium leading-normal sticky top-0 bg-[#182834] z-10">Year</th>
-              <th class="px-4 py-4 text-left text-white w-[400px] text-sm font-medium leading-normal sticky top-0 bg-[#182834] z-10">Performance Video Link</th>
-              <th class="px-4 py-4 text-left text-white w-[400px] text-sm font-medium leading-normal sticky top-0 bg-[#182834] z-10">Performer's Name</th>
-              <th class="px-4 py-4 text-left text-white w-[50px] text-sm font-medium leading-normal sticky top-0 bg-[#182834] z-10">Delete</th>
-            </tr>
-          </thead>
-          <tbody id="details-table-body">
-            <!-- תוכן דינמי -->
-          </tbody>
-        </table>
-      </div>
+    <div class="flex-1 overflow-y-auto">
+      <table class="w-full border-collapse">
+        <thead>
+          <tr class="bg-[#182834]">
+            <th class="px-4 py-4 text-left text-white w-[50px] text-sm font-medium leading-normal sticky top-0 bg-[#182834] z-10">Select</th>
+            <th class="px-4 py-4 text-left text-white w-[400px] text-sm font-medium leading-normal sticky top-0 bg-[#182834] z-10">Song Name</th>
+            <th class="px-4 py-4 text-left text-white w-[400px] text-sm font-medium leading-normal sticky top-0 bg-[#182834] z-10">Poet's Name</th>
+            <th class="px-4 py-4 text-left text-white w-[400px] text-sm font-medium leading-normal sticky top-0 bg-[#182834] z-10">Composer's Name</th>
+            <th class="px-4 py-4 text-left text-white w-[400px] text-sm font-medium leading-normal sticky top-0 bg-[#182834] z-10">Year</th>
+            <th class="px-4 py-4 text-left text-white w-[400px] text-sm font-medium leading-normal sticky top-0 bg-[#182834] z-10">Performance Video Link</th>
+            <th class="px-4 py-4 text-left text-white w-[400px] text-sm font-medium leading-normal sticky top-0 bg-[#182834] z-10">Performer's Name</th>
+            <th class="px-4 py-4 text-left text-white w-[50px] text-sm font-medium leading-normal sticky top-0 bg-[#182834] z-10">Delete</th>
+          </tr>
+        </thead>
+        <tbody id="details-table-body">
+          <!-- תוכן דינמי -->
+        </tbody>
+      </table>
+    </div>
+
+    
+      
     
       <!-- חלק תחתון: טקסטאריה -->
       <div class="flex-1 overflow-y-auto">
@@ -242,6 +255,25 @@ const detailsTableBody = document.getElementById("details-table-body");
 const details_data = JSON.parse(document.getElementById("details-data").textContent);
 
 let selectedSongName = null;
+
+document.getElementById("reset").addEventListener("click", async () => {
+  if (confirm("Are you sure you want to reset all data?")) {
+    try {
+      const response = await fetch("/clear-db", { method: "DELETE" });
+      if (response.ok) {
+        alert("All data has been reset successfully.");
+        window.location.reload(); // רענון המסך
+      } else {
+        throw new Error("Failed to reset data.");
+      }
+    } catch (error) {
+      alert(error)
+      console.error("Error resetting data:", error);
+      alert("An error occurred while trying to reset data.");
+    }
+  }
+});
+
 
 function handleSongSelection(songName) {
   if (songName) {
@@ -425,7 +457,6 @@ function renderDetailsTable(song_name) {
 
     detailsTableBody.innerHTML = ""; // נקה את הטבלה
     details_data.forEach(row => {
-
         if (row[1] === song_name) { // בדוק אם הערך בשדה row[1] שווה ל-song_name
             const tr = document.createElement("tr");
             tr.innerHTML = `
@@ -475,7 +506,7 @@ async function deleteRow(detailsId) {
     }
   } catch (err) {
     console.error("Error deleting song detail:", err);
-    alert("An error occurred while deleting the song detail.");
+    // alert("An error occurred while deleting the song detail.");
   }
 
   window.location.reload();
@@ -504,7 +535,6 @@ for (let year = currentYear; year >= 1960; year--) {
 
   function handleFileSelect(event) {
     selectedFiles = Array.from(event.target.files); // מאחסן את כל הקבצים שנבחרו במערך
-
     console.log("Selected files:", selectedFiles);
 
     // הצגת שמות הקבצים כמשוב למשתמש (אופציונלי)

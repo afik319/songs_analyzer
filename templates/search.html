@@ -11,20 +11,26 @@
                         value=""
                         placeholder="Type to filter songs..."
                     />
-    <div id="song-list-container"  class="flex-1 overflow-y-auto flex flex-col gap-4">
-      <div class="song-item flex items-center gap-4 bg-[#101a23] px-4 min-h-[48px] py-2 justify-between">
+    <div class="flex items-center gap-4 bg-[#101a23] px-4 min-h-[48px] py-2 justify-between">
         <div class="flex items-center gap-4">
-          <p class="song-name text-white text-base font-medium leading-normal line-clamp-1">All</p>
+            <button
+                id="select-all-button"
+                class="bg-[#2094f3] text-white rounded-lg px-4 py-2 text-sm font-bold leading-normal hover:bg-[#1a7ec8] transition-colors duration-200"
+                onclick="selectAllSongs(true)"
+            >
+                Select All
+            </button>
+            <button
+                id="clear-all-button"
+                class="bg-[#314f68] text-white rounded-lg px-4 py-2 text-sm font-bold leading-normal hover:bg-[#253a50] transition-colors duration-200"
+                onclick="selectAllSongs(false)"
+            >
+                Clear
+            </button>
         </div>
-        <div class="shrink-0">
-          <input
-            type="checkbox"
-            id="select-all-checkbox"
-            class="h-5 w-5 rounded border-[#314f68] border-2 bg-transparent text-[#2094f3] checked:bg-[#2094f3] checked:border-[#2094f3]"
-            onclick="selectAllSongs(this)"
-          />
-        </div>
-      </div>
+    </div>
+    <div id="song-list-container"  class="flex-1 overflow-y-auto flex flex-col gap-4">
+
       {% for id, song_name in songs %}
       <div class="song-item flex items-center gap-4 bg-[#101a23] px-4 min-h-[72px] py-2 justify-between">
         <div class="flex items-center gap-4">
@@ -72,7 +78,7 @@
   
         <!-- אזור הפסקאות -->
         <div class="flex-[2] overflow-hidden border border-[#314f68] rounded-xl p-4 flex flex-col">
-          <h2 class="text-white text-[22px] font-bold leading-tight tracking-[-0.015em] mb-4">Contexts</h2>
+          <h2 class="text-white text-[22px] font-bold leading-tight tracking-[-0.015em] mb-4">Contextes</h2>
           <div class="flex-1 overflow-y-auto">
             <table id="phrases-table" class="w-full text-left border-collapse">
               <thead>
@@ -132,6 +138,9 @@
 </script>
 
 <script>
+
+
+
     
   document.addEventListener("DOMContentLoaded", () => {
     const words = JSON.parse(document.getElementById("words-data").textContent);
@@ -148,24 +157,32 @@
     const textDisplayElement = document.getElementById("text-display");
     const selectAllCheckbox = document.getElementById("select-all-checkbox");
 
+    const selectAllButton = document.getElementById("select-all-button");
+    const clearAllButton = document.getElementById("clear-all-button");
+    const checkboxes = document.querySelectorAll("#song-list-container input[type='checkbox']");
 
-    selectAllCheckbox.addEventListener("change", (event) => {
-  const checkboxes = document.querySelectorAll(
-    "#song-list-container input[type='checkbox']:not(#select-all-checkbox)"
-  );
+    // מאזין לכפתור "All"
+    selectAllButton.addEventListener("click", () => {
+        checkboxes.forEach((checkbox) => {
+            checkbox.checked = true; // בוחר את כל תיבות הסימון
+        });
+        updateWordList();
+    });
 
-  const isChecked = event.target.checked;
+    // מאזין לכפתור "Clear"
+    clearAllButton.addEventListener("click", () => {
+        checkboxes.forEach((checkbox) => {
+            checkbox.checked = false; // מנקה את כל תיבות הסימון
+        });
+        updateWordList();
+    });
 
-  // עדכן את כל הצ'קבוקסים האחרים בהתאם למצב של 'All'
-  checkboxes.forEach((checkbox) => {
-    checkbox.checked = isChecked;
+    songListContainer.addEventListener("change", (event) => {
+    const target = event.target;
+    if (target.type === "checkbox") {
+      updateWordList();
+    }
   });
-
-  console.log(isChecked ? "All checkboxes selected" : "All checkboxes deselected");
-  updateWordList();
-
-});
-
 
 
   filterSongsInput.addEventListener("input", (event) => {
@@ -185,9 +202,8 @@
     let selectedWord = null; // שמור את המילה שנבחרה
   
 
-
-
     function updateWordList() {
+
       const filterText = filterWordsInput.value.toLowerCase().trim();
         // שמור את המילה שנבחרה לפני הרינדור
         const previouslySelectedWord = selectedWord;
@@ -317,7 +333,7 @@
         }
     }
   
-    songCheckboxes.forEach(checkbox => checkbox.addEventListener("change", updateWordList));
+    // songCheckboxes.forEach(checkbox => checkbox.addEventListener("change", updateWordList));
     updateWordList();
 });
 
