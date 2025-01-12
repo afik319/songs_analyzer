@@ -40,7 +40,6 @@
           ></div>
           <div class="flex flex-col justify-center">
             <p class="song-name text-white text-base font-medium leading-normal line-clamp-1">{{ song_name }}</p>
-            <p class="text-[#90b0cb] text-sm font-normal leading-normal line-clamp-2">{{ id }}</p>
           </div>
         </div>
         <div class="shrink-0">
@@ -223,9 +222,8 @@
     ).filter((word) => word[2].toLowerCase().includes(filterText));
 
     
-
+    wordListContainer.innerHTML = "";
     if (uniqueWords.length > 0) {
-      wordListContainer.innerHTML = "";
 
     // הוספת רדיו של "ALL"
     const allLabel = document.createElement("label");
