@@ -203,99 +203,129 @@
   
 
     function updateWordList() {
+    const filterText = filterWordsInput.value.toLowerCase().trim();
+    const previouslySelectedWord = selectedWord;
 
-      const filterText = filterWordsInput.value.toLowerCase().trim();
-        // שמור את המילה שנבחרה לפני הרינדור
-        const previouslySelectedWord = selectedWord;
+    const selectedSongs = Array.from(
+        document.querySelectorAll("input[type='checkbox']:checked")
+    ).map((checkbox) => Number(checkbox.dataset.id));
 
-        const selectedSongs = Array.from(
-            document.querySelectorAll("input[type='checkbox']:checked")
-        ).map((checkbox) => Number(checkbox.dataset.id));
+    selectedSongsNames = Array.from(
+        document.querySelectorAll("input[type='checkbox']:checked")
+    ).map((checkbox) => checkbox.dataset.name);
 
-        selectedSongsNames = Array.from(
-            document.querySelectorAll("input[type='checkbox']:checked")
-        ).map((checkbox) => checkbox.dataset.name);
+    const filteredWords = words.filter((word) =>
+        selectedSongs.includes(Number(word[3]))
+    );
 
-        const filteredWords = words.filter((word) =>
-            selectedSongs.includes(Number(word[3]))
-        );
+    const uniqueWords = Array.from(
+        new Map(filteredWords.map((word) => [word[2], word])).values()
+    ).filter((word) => word[2].toLowerCase().includes(filterText));
+
     
-        const uniqueWords = Array.from(
-            new Map(filteredWords.map((word) => [word[2], word])).values()
-        ).filter((word) => word[2].toLowerCase().includes(filterText));
 
+    if (uniqueWords.length > 0) {
+      wordListContainer.innerHTML = "";
 
-        wordListContainer.innerHTML = "";
-        if (uniqueWords.length > 0) {
-            uniqueWords.forEach(([id, word_id, clean_word, song_id]) => {
-                const label = document.createElement("label");
-                label.className = "flex items-center gap-4";
-                label.innerHTML = `
-                    <input
-                        type="radio"
-                        class="h-5 w-5 border-2 border-[#314f68] bg-transparent text-transparent checked:border-[#2094f3]"
-                        name="wordSelection"
-                        data-clean-word="${clean_word}"
-                    />
-                    <p class="text-white text-sm font-medium">${clean_word}</p>
-                `;
-                const inputElement = label.querySelector("input");
+    // הוספת רדיו של "ALL"
+    const allLabel = document.createElement("label");
+    allLabel.className = "flex items-center gap-4";
+    allLabel.innerHTML = `
+        <input
+            type="radio"
+            class="h-5 w-5 border-2 border-[#314f68] bg-transparent text-transparent checked:border-[#2094f3]"
+            name="wordSelection"
+            value="All"
+        />
+        <p class="text-white text-sm font-medium">ALL</p>
+    `;
+    const allInput = allLabel.querySelector("input");
+    allInput.addEventListener("change", () => {
+        selectedWord = "ALL";
+        updatePhrases("ALL"); // הצגת כל הפסקאות
+    });
 
-                // אם זו המילה שנבחרה בעבר, סמן אותה
-                if (clean_word === previouslySelectedWord) {
-                    inputElement.checked = true;
-                    selectedWord = clean_word;
-                }
+    wordListContainer.appendChild(allLabel);
+        uniqueWords.forEach(([id, word_id, clean_word, song_id]) => {
+            const label = document.createElement("label");
+            label.className = "flex items-center gap-4";
+            label.innerHTML = `
+                <input
+                    type="radio"
+                    class="h-5 w-5 border-2 border-[#314f68] bg-transparent text-transparent checked:border-[#2094f3]"
+                    name="wordSelection"
+                    data-clean-word="${clean_word}"
+                />
+                <p class="text-white text-sm font-medium">${clean_word}</p>
+            `;
+            const inputElement = label.querySelector("input");
 
-                inputElement.addEventListener("change", () => {
-                    selectedWord = clean_word;
-                    updatePhrases(clean_word); // עדכן את הפסקאות לפי המילה שנבחרה
-                });
+            // אם זו המילה שנבחרה בעבר, סמן אותה
+            if (clean_word === previouslySelectedWord) {
+                inputElement.checked = true;
+                selectedWord = clean_word;
+            }
 
-                wordListContainer.appendChild(label);
+            inputElement.addEventListener("change", () => {
+                selectedWord = clean_word;
+                updatePhrases(clean_word); // עדכן את הפסקאות לפי המילה שנבחרה
             });
-        } else {
-            wordListContainer.innerHTML = `<p class="text-white text-sm">No words match the selected songs.</p>`;
-        }
 
-        // עדכן את הפסקאות על סמך המילה הנוכחית והשירים הנבחרים
+            wordListContainer.appendChild(label);
+        });
+    } else {
+        wordListContainer.innerHTML += `<p class="text-white text-sm">No words match the selected songs.</p>`;
+    }
+
+    // עדכן את הפסקאות על סמך המילה הנוכחית והשירים הנבחרים
+    if (previouslySelectedWord) {
         updatePhrases(previouslySelectedWord);
     }
+}
+
+
     filterWordsInput.addEventListener("input", updateWordList);
   
     function updatePhrases(selectedWord) {
-        const filteredPhrases = pars.filter(par => 
-            (!selectedWord || par[0] === selectedWord) &&
-            selectedSongsNames.includes(par[1])
-        );
-  
-        phrasesTableBody.innerHTML = "";
-        if (filteredPhrases.length > 0) {
-            filteredPhrases.forEach(([clean_word, song_name, par_num, par_content]) => {
-                const row = document.createElement("tr");
-                row.className = "border-t border-[#314f68]";
-                row.innerHTML = `
-                    <td class="px-4 py-2 text-[#90b0cb] text-sm font-normal">
-                        <input
-                            type="radio"
-                            name="paragraphSelection"
-                            class="h-5 w-5 border-2 border-[#314f68] bg-transparent text-transparent checked:border-[#2094f3]"
-                            data-par-content="${par_content}"
-                            data-song-name="${song_name}"
-                        />
-                    </td>
-                    <td class="px-4 py-2 text-[#90b0cb] text-sm font-normal">${clean_word}</td>
-                    <td class="px-4 py-2 text-[#90b0cb] text-sm font-normal">${song_name}</td>
-                    <td class="px-4 py-2 text-[#90b0cb] text-sm font-normal">${par_num}</td>
-                `;
-                row.querySelector("input").addEventListener("change", updateTextDisplay);
-                phrasesTableBody.appendChild(row);
-            });
-        } else {
-            phrasesTableBody.innerHTML = `<tr><td colspan="4" class="px-4 py-2 text-[#90b0cb] text-sm font-normal">No matching phrases.</td></tr>`;
-        }
-        updateTextDisplay();
+    // סנן פסקאות לפי המילה שנבחרה והשירים שנבחרו
+    const filteredPhrases = pars.filter(par =>
+        (selectedWord === "ALL" || !selectedWord || par[0] === selectedWord) &&
+        selectedSongsNames.includes(par[1])
+    );
+
+    // נקה את הטבלה לפני רינדור הפסקאות
+    phrasesTableBody.innerHTML = "";
+
+    if (filteredPhrases.length > 0) {
+        filteredPhrases.forEach(([clean_word, song_name, par_num, par_content]) => {
+            const row = document.createElement("tr");
+            row.className = "border-t border-[#314f68]";
+            row.innerHTML = `
+                <td class="px-4 py-2 text-[#90b0cb] text-sm font-normal">
+                    <input
+                        type="radio"
+                        name="paragraphSelection"
+                        class="h-5 w-5 border-2 border-[#314f68] bg-transparent text-transparent checked:border-[#2094f3]"
+                        data-par-content="${par_content}"
+                        data-song-name="${song_name}"
+                    />
+                </td>
+                <td class="px-4 py-2 text-[#90b0cb] text-sm font-normal">${clean_word}</td>
+                <td class="px-4 py-2 text-[#90b0cb] text-sm font-normal">${song_name}</td>
+                <td class="px-4 py-2 text-[#90b0cb] text-sm font-normal">${par_num}</td>
+            `;
+            row.querySelector("input").addEventListener("change", updateTextDisplay);
+            phrasesTableBody.appendChild(row);
+        });
+    } else {
+        // הצג הודעה אם אין פסקאות מתאימות
+        phrasesTableBody.innerHTML = `<tr><td colspan="4" class="px-4 py-2 text-[#90b0cb] text-sm font-normal">No matching phrases.</td></tr>`;
     }
+
+    // עדכן את תצוגת הטקסט
+    updateTextDisplay();
+}
+
 
     async function loadSongContent(songName) {
   const contentElement = document.getElementById("song-content");
