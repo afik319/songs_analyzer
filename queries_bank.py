@@ -241,3 +241,83 @@ insert_to_words_query = """
     INSERT INTO words (word_str, last_syllable)
     VALUES (:word_str, :last_syllable)
 """
+
+
+"""
+    ****
+    special area
+    ****
+The following two queries implement the reconstruction of the full song from the database and the search for
+linguistic expressions within the database for external implementation without accessing the files.
+"""
+show_full_song = """
+    SELECT
+        song_id,
+        song_name, 
+        STRING_AGG(unclean_word , '') AS SONG_LYRICS
+    FROM words_in_songs
+    JOIN songs ON songs.id = words_in_songs.song_id
+    WHERE (:song_id IS NULL OR song_id = :song_id)
+    GROUP BY song_id, song_name
+"""
+
+get_expression_contexts = """
+WITH search_phrase AS (
+    SELECT :expression AS text
+),
+phrase_words AS (
+    -- Splitting the search phrase into individual words and assigning positions
+    SELECT value AS word,
+           ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS position
+    FROM STRING_SPLIT((SELECT text FROM search_phrase), ' ')
+),
+word_matches AS (
+    -- Finding all occurrences of words from the phrase in the song words table,
+    -- ensuring each word is mapped to its respective position in the phrase.
+    SELECT
+        wis.song_id,
+        wis.word_num,          -- Global word position in the song
+        wis.par_num,
+        wis.line_num_in_par,
+        wis.word_num_in_line,
+        pw.position
+    FROM words_in_songs wis
+    JOIN phrase_words pw
+      ON wis.clean_word = pw.word
+),
+grouped_matches AS (
+    -- Identifying contiguous sequences of words where:
+    -- (word_num - position) remains constant for a valid phrase occurrence.
+    SELECT
+        song_id,
+        MIN(word_num) AS start_word_num,  -- Global position of the first word in the phrase
+        COUNT(*) AS cnt,
+        MIN(word_num) - MIN(position) AS grp
+    FROM word_matches
+    GROUP BY song_id, (word_num - position)
+),
+valid_sequences AS (
+    -- Selecting only sequences that contain the exact number of words in the phrase.
+    -- This ensures that the phrase appears fully and contiguously even across paragraphs or lines.
+    SELECT gm.song_id, gm.start_word_num
+    FROM grouped_matches gm
+    WHERE gm.cnt = (SELECT COUNT(*) FROM phrase_words)
+)
+SELECT DISTINCT 
+    s.song_name,
+    ws.par_num,
+    ws.line_num_in_par,
+    ws.word_num_in_line AS start_word_in_line
+FROM valid_sequences vs
+JOIN words_in_songs ws 
+  ON vs.song_id = ws.song_id 
+  AND vs.start_word_num = ws.word_num
+JOIN songs s 
+  ON vs.song_id = s.id
+ORDER BY 
+    s.song_name, 
+    ws.par_num, 
+    ws.line_num_in_par, 
+    ws.word_num_in_line;
+
+"""
